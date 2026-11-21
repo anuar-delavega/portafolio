@@ -1,0 +1,165 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { useT, type Lang } from '../i18n/ui';
+import { site } from '../site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useT(lang);
+
+const projects = (await getCollection('projects', (p) => p.id.startsWith(`${lang}/`))).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const featured = projects.filter((p) => p.data.featured);
+const rest = projects.filter((p) => !p.data.featured);
+const categories = [...new Set(rest.map((p) => p.data.category))];
+
+const stats = [
+  { value: '18+', label: t('stats.years') },
+  { value: String(projects.length), label: t('stats.projects') },
+  { value: '170+', label: t('stats.commits') },
+  { value: String(projects.filter((p) => p.data.status === 'production').length), label: t('stats.production') },
+];
+const skills = (['s1', 's2', 's3', 's4'] as const).map((k) => ({
+  title: t(`about.${k}.t`),
+  desc: t(`about.${k}.d`),
+}));
+---
+
+<Base lang={lang} altPath={lang === 'es' ? 'en' : ''}>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">{t('hero.eyebrow')}</p>
+        <h1>{t('hero.title')}</h1>
+        <p class="lead">{t('hero.lead')}</p>
+        <div class="ctas">
+          <a class="btn btn--primary" href="#proyectos">{t('hero.cta.projects')} <span aria-hidden="true">↓</span></a>
+          <a class="btn" href="#contacto">{t('hero.cta.contact')}</a>
+        </div>
+      </div>
+      <dl class="stats">
+        {stats.map((s) => (
+          <div class="stat">
+            <dt>{s.label}</dt>
+            <dd>{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <section id="proyectos" class="section">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">{t('projects.featured')}</p>
+        <h2>{t('projects.title')}</h2>
+        <p>{t('projects.lead')}</p>
+      </div>
+      <div class="grid grid--featured">
+        {featured.map((p) => <ProjectCard project={p} lang={lang} large />)}
+      </div>
+
+      <div class="more-head">
+        <h3>{t('projects.more')}</h3>
+        <div class="filters" role="group" aria-label="Filter">
+          <button type="button" class="filter is-active" data-filter="all">{t('filter.all')}</button>
+          {categories.map((c) => (
+            <button type="button" class="filter" data-filter={c}>{t(`category.${c}`)}</button>
+          ))}
+        </div>
+      </div>
+      <div class="grid grid--rest" id="rest-grid">
+        {rest.map((p) => <ProjectCard project={p} lang={lang} />)}
+      </div>
+    </div>
+  </section>
+
+  <section id="perfil" class="section about">
+    <div class="container about-grid">
+      <div class="section-head">
+        <p class="eyebrow">{t('about.title')}</p>
+        <h2>{site.name}</h2>
+        <p>{t('about.p1')}</p>
+        <p>{t('about.p2')}</p>
+      </div>
+      <div>
+        <h3 class="skills-title">{t('about.skills')}</h3>
+        <ul class="skills">
+          {skills.map((s) => (
+            <li><strong>{s.title}</strong><span>{s.desc}</span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto" class="section contact">
+    <div class="container contact-box">
+      <h2>{t('contact.title')}</h2>
+      <p>{t('contact.lead')}</p>
+      <div class="ctas">
+        <a class="btn btn--primary" href={site.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a class="btn" href={site.github} target="_blank" rel="noopener">GitHub ↗</a>
+        {site.email && <a class="btn" href={`mailto:${site.email}`}>{site.email}</a>}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter');
+  const cards = document.querySelectorAll<HTMLElement>('#rest-grid .card');
+  buttons.forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const f = btn.dataset.filter;
+      buttons.forEach((b) => b.classList.toggle('is-active', b === btn));
+      cards.forEach((c) => (c.hidden = f !== 'all' && c.dataset.category !== f));
+    }),
+  );
+</script>
+
+<style>
+  .hero { padding-block: clamp(56px, 10vw, 120px) clamp(40px, 6vw, 72px); border-bottom: 1px solid var(--line); }
+  .hero-grid { display: grid; gap: 48px; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: end; }
+  .hero-copy { display: grid; gap: 20px; }
+  h1 { font-size: clamp(2.2rem, 5.4vw, 3.9rem); }
+  .lead { font-size: clamp(1.05rem, 1.6vw, 1.2rem); color: var(--ink-2); max-width: 60ch; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .stat { background: var(--surface); padding: 20px; display: flex; flex-direction: column-reverse; gap: 2px; }
+  .stat dd { margin: 0; font-family: var(--font-display); font-size: 2.2rem; line-height: 1; }
+  .stat dt { font-size: 0.82rem; color: var(--ink-3); }
+  @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
+
+  .grid { display: grid; gap: 24px; }
+  .grid--featured { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid--rest { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 960px) { .grid--rest { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 680px) { .grid--featured, .grid--rest { grid-template-columns: 1fr; } }
+
+  .more-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 72px 0 24px; }
+  .more-head h3 { font-size: 1.5rem; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filter {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink-2); font: 500 0.85rem var(--font-body); cursor: pointer;
+  }
+  .filter:hover { border-color: var(--ink-3); }
+  .filter.is-active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .about { background: var(--surface-2); border-block: 1px solid var(--line); }
+  .about-grid { display: grid; gap: 48px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .about .section-head { margin-bottom: 0; }
+  .skills-title { font-size: 1.3rem; margin-bottom: 16px; }
+  .skills { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .skills li { display: grid; gap: 2px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .skills span { color: var(--ink-2); font-size: 0.93rem; }
+  @media (max-width: 860px) { .about-grid { grid-template-columns: 1fr; } }
+
+  .contact-box { display: grid; gap: 14px; justify-items: start; }
+  .contact-box h2 { font-size: clamp(1.9rem, 4.5vw, 3rem); }
+  .contact-box p { color: var(--ink-2); font-size: 1.1rem; }
+</style>
