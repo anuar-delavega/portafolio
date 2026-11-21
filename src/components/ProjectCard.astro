@@ -1,0 +1,58 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { useT, projectsSegment, type Lang } from '../i18n/ui';
+import { href } from '../site';
+import Cover from './Cover.astro';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  lang: Lang;
+  large?: boolean;
+}
+
+const { project, lang, large = false } = Astro.props;
+const t = useT(lang);
+const d = project.data;
+const slug = project.id.split('/').pop()!;
+const prefix = lang === 'es' ? '' : 'en/';
+const url = href(`${prefix}${projectsSegment[lang]}/${slug}`);
+---
+
+<article class:list={['card', { large }]} data-category={d.category}>
+  <a class="cover-link" href={url} tabindex="-1" aria-hidden="true">
+    <Cover slug={slug} title={d.title} category={d.category} order={d.order} />
+  </a>
+  <div class="body">
+    <div class="meta">
+      <span class:list={['badge', `badge--${d.status}`]}>{t(`status.${d.status}`)}</span>
+      <span class="dot">·</span>
+      <span>{t(`category.${d.category}`)}</span>
+      <span class="dot">·</span>
+      <span>{d.period}</span>
+    </div>
+    <h3><a href={url}>{d.title}</a></h3>
+    <p class="tagline">{d.tagline}</p>
+    <ul class="stack" aria-label={t('project.stack')}>
+      {d.stack.slice(0, large ? 6 : 4).map((s) => <li class="chip">{s}</li>)}
+    </ul>
+  </div>
+</article>
+
+<style>
+  .card {
+    position: relative; display: flex; flex-direction: column;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--ink-3); }
+  .cover-link { display: block; }
+  .body { display: grid; gap: 10px; padding: 20px 22px 24px; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-3); }
+  .dot { opacity: 0.6; }
+  h3 { font-size: 1.35rem; }
+  .large h3 { font-size: 1.6rem; }
+  h3 a { text-decoration: none; }
+  h3 a::after { content: ''; position: absolute; inset: 0; }
+  .tagline { color: var(--ink-2); font-size: 0.97rem; }
+  .stack { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 4px 0 0; list-style: none; }
+</style>
