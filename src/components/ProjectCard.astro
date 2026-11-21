@@ -2,57 +2,88 @@
 import type { CollectionEntry } from 'astro:content';
 import { useT, projectsSegment, type Lang } from '../i18n/ui';
 import { href } from '../site';
-import Cover from './Cover.astro';
+import Vis from './Vis.astro';
 
 interface Props {
   project: CollectionEntry<'projects'>;
   lang: Lang;
-  large?: boolean;
+  index: number;
 }
 
-const { project, lang, large = false } = Astro.props;
+const { project, lang, index } = Astro.props;
 const t = useT(lang);
 const d = project.data;
 const slug = project.id.split('/').pop()!;
-const prefix = lang === 'es' ? '' : 'en/';
-const url = href(`${prefix}${projectsSegment[lang]}/${slug}`);
+const url = href(`${lang === 'es' ? '' : 'en/'}${projectsSegment[lang]}/${slug}`);
+const featured = d.status === 'production';
 ---
 
-<article class:list={['card', { large }]} data-category={d.category}>
-  <a class="cover-link" href={url} tabindex="-1" aria-hidden="true">
-    <Cover slug={slug} title={d.title} category={d.category} order={d.order} />
-  </a>
-  <div class="body">
-    <div class="meta">
-      <span class:list={['badge', `badge--${d.status}`]}>{t(`status.${d.status}`)}</span>
-      <span class="dot">·</span>
-      <span>{t(`category.${d.category}`)}</span>
-      <span class="dot">·</span>
-      <span>{d.period}</span>
+<a
+  class:list={['pc', 'glass', { fe: featured }]}
+  href={url}
+  data-tilt
+  data-category={d.category}
+  style={`animation-delay:${index * 0.07}s`}
+>
+  <div class="vis" aria-hidden="true">
+    <Vis slug={slug} title={d.title} category={d.category} />
+    <span class="m num">{String(d.order).padStart(2, '0')}</span>
+    <span class:list={['stt', d.status, 'st']}><i></i>{t(`status.${d.status}`)}</span>
+  </div>
+  <div class="pb">
+    <span class="m" style="color:var(--mu2)">{t(`category.${d.category}`)} · {d.period}</span>
+    <div class="row">
+      <h3 class="u">{d.title}</h3>
+      <span class="arr" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"></path></svg>
+      </span>
     </div>
-    <h3><a href={url}>{d.title}</a></h3>
-    <p class="tagline">{d.tagline}</p>
-    <ul class="stack" aria-label={t('project.stack')}>
-      {d.stack.slice(0, large ? 6 : 4).map((s) => <li class="chip">{s}</li>)}
+    <p>{d.tagline}</p>
+    <ul class="tags" aria-label={t('project.stack')}>
+      {d.stack.slice(0, featured ? 6 : 4).map((s) => <li class="tg">{s}</li>)}
     </ul>
   </div>
-</article>
+</a>
 
 <style>
-  .card {
-    position: relative; display: flex; flex-direction: column;
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  .pc {
+    position: relative; display: flex; flex-direction: column; border-radius: 26px; color: var(--tx);
+    transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.5s var(--ease), box-shadow 0.5s;
+    animation: cin 0.8s var(--ease) both; overflow: hidden; isolation: isolate;
   }
-  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--ink-3); }
-  .cover-link { display: block; }
-  .body { display: grid; gap: 10px; padding: 20px 22px 24px; }
-  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-3); }
-  .dot { opacity: 0.6; }
-  h3 { font-size: 1.35rem; }
-  .large h3 { font-size: 1.6rem; }
-  h3 a { text-decoration: none; }
-  h3 a::after { content: ''; position: absolute; inset: 0; }
-  .tagline { color: var(--ink-2); font-size: 0.97rem; }
-  .stack { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 4px 0 0; list-style: none; }
+  .pc[hidden] { display: none; }
+  @keyframes cin { from { opacity: 0; transform: translateY(40px) scale(0.95); } }
+  .pc:hover { transition: transform 0.12s linear, box-shadow 0.5s; box-shadow: 0 40px 100px -30px color-mix(in oklab, var(--c1) 60%, transparent); color: var(--tx); }
+  .pc::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+    background: radial-gradient(500px circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.14), transparent 45%);
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .pc:hover::after { opacity: 1; }
+  .pc.fe::before {
+    content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1.5px; z-index: 4; pointer-events: none;
+    background: conic-gradient(from var(--ang), var(--c1), var(--c2), var(--c3), var(--c1));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 4s linear infinite;
+  }
+  @media (min-width: 1000px) { .pc.fe { grid-column: span 2; } }
+  .vis {
+    position: relative; height: 190px; overflow: hidden; border-bottom: 1px solid var(--ln);
+    background:
+      radial-gradient(120% 120% at 20% 0%, color-mix(in oklab, var(--c1) 30%, transparent), transparent 60%),
+      radial-gradient(100% 100% at 100% 100%, color-mix(in oklab, var(--c2) 25%, transparent), transparent 60%),
+      #0b0916;
+  }
+  .fe .vis { height: 240px; }
+  .vis > :global(*) { transition: transform 0.8s var(--ease); }
+  .pc:hover .vis > :global(*:not(.vg):not(.num):not(.st)) { transform: scale(1.08); }
+  .num { position: absolute; left: 22px; top: 20px; color: rgba(255, 255, 255, 0.75); }
+  .st { position: absolute; right: 18px; top: 16px; }
+  .pb { display: flex; flex-direction: column; gap: 12px; padding: 26px 28px 28px; flex: 1; background: rgba(14, 12, 26, 0.85); }
+  .row { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+  h3 { font-size: 23px; line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
+  p { margin: 0; color: var(--mu); font-size: 15px; line-height: 1.6; text-wrap: pretty; }
+  .tags { margin-top: auto; padding-top: 10px; }
+  .pc:hover .arr { background: #fff; color: #05040a; border-color: #fff; transform: rotate(45deg); }
 </style>

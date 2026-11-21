@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import { useT, type Lang } from '../i18n/ui';
+import { useT, heroWords, roles, stackMarquee, type Lang } from '../i18n/ui';
 import { site } from '../site';
 
 interface Props { lang: Lang }
@@ -12,154 +12,343 @@ const t = useT(lang);
 const projects = (await getCollection('projects', (p) => p.id.startsWith(`${lang}/`))).sort(
   (a, b) => a.data.order - b.data.order,
 );
-const featured = projects.filter((p) => p.data.featured);
-const rest = projects.filter((p) => !p.data.featured);
-const categories = [...new Set(rest.map((p) => p.data.category))];
+
+const categories = ['product', 'tool', 'automation', 'web'] as const;
+const filters = [
+  { key: 'all', label: t('filter.all'), count: projects.length },
+  ...categories.map((c) => ({
+    key: c,
+    label: t(`filter.${c}`),
+    count: projects.filter((p) => p.data.category === c).length,
+  })),
+].filter((f) => f.count > 0);
 
 const stats = [
-  { value: '18+', label: t('stats.years') },
-  { value: String(projects.length), label: t('stats.projects') },
-  { value: '170+', label: t('stats.commits') },
-  { value: String(projects.filter((p) => p.data.status === 'production').length), label: t('stats.production') },
+  { n: 18, suffix: '+', label: t('stats.years') },
+  { n: projects.length, suffix: '', label: t('stats.projects') },
+  { n: 170, suffix: '+', label: t('stats.commits') },
+  { n: projects.filter((p) => p.data.status === 'production').length, suffix: '', label: t('stats.production') },
 ];
-const skills = (['s1', 's2', 's3', 's4'] as const).map((k) => ({
-  title: t(`about.${k}.t`),
-  desc: t(`about.${k}.d`),
+
+const hw = heroWords[lang];
+const marquee = ['Delivery Management', t('mq.ai'), t('mq.prod'), 'Security First'];
+const timeline = ([1, 2, 3] as const).map((i) => ({
+  when: t(`tl.${i}.when`),
+  title: t(`tl.${i}.title`),
+  desc: t(`tl.${i}.desc`),
 }));
+const method = [
+  { k: 1, color: 'var(--c1)', icon: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>' },
+  { k: 2, color: 'var(--c3)', icon: '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/>' },
+  { k: 3, color: 'var(--c2)', icon: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>' },
+  { k: 4, color: 'var(--ok)', icon: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>' },
+] as const;
+const star = '<path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>';
+const arrowUpRight = '<path d="M7 17 17 7M8 7h9v9"/>';
 ---
 
-<Base lang={lang} altPath={lang === 'es' ? 'en' : ''}>
-  <section class="hero">
-    <div class="container hero-grid">
-      <div class="hero-copy">
-        <p class="eyebrow">{t('hero.eyebrow')}</p>
-        <h1>{t('hero.title')}</h1>
-        <p class="lead">{t('hero.lead')}</p>
-        <div class="ctas">
-          <a class="btn btn--primary" href="#proyectos">{t('hero.cta.projects')} <span aria-hidden="true">↓</span></a>
-          <a class="btn" href="#contacto">{t('hero.cta.contact')}</a>
-        </div>
+<Base lang={lang} altPath={lang === 'es' ? 'en' : ''} intro>
+  <!-- HERO -->
+  <section id="inicio" class="hero">
+    <div class="aur" aria-hidden="true"><div class="bl a"></div><div class="bl b"></div><div class="bl c"></div></div>
+    <canvas class="fx" aria-hidden="true"></canvas>
+    <svg class="grain" aria-hidden="true">
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" stitchTiles="stitch"></feTurbulence></filter>
+      <rect width="100%" height="100%" filter="url(#grain)"></rect>
+    </svg>
+
+    <div class="w hero-in">
+      <div class="fi glass badge" style="animation-delay:calc(var(--d) + .3s)">
+        <span class="pulse"></span>{t('hero.badge')}
       </div>
-      <dl class="stats">
-        {stats.map((s) => (
-          <div class="stat">
-            <dt>{s.label}</dt>
-            <dd>{s.value}</dd>
+      <h1 class="u title">
+        {
+          hw.words.map((w, i) => (
+            <>
+              <span class="msk">
+                <span class:list={{ grad: i >= hw.gradFrom }} style={`animation-delay:calc(var(--d) + ${(0.05 + i * 0.09).toFixed(2)}s)`}>{w}</span>
+              </span>{' '}
+            </>
+          ))
+        }
+      </h1>
+      <div class="fi m role" style="animation-delay:calc(var(--d) + 1s)">
+        &gt; anuar.role = <span>"</span><span class="scr" data-roles={JSON.stringify(roles)}>{roles[0]}</span><span>"</span><span class="caret"></span>
+      </div>
+      <p class="fi hero-lead" style="animation-delay:calc(var(--d) + 1.15s)">{t('hero.lead')}</p>
+      <div class="fi ctas" style="animation-delay:calc(var(--d) + 1.3s)">
+        <a class="btn bp" href="#proyectos" data-mag>
+          {t('hero.cta.projects')}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+        </a>
+        <a class="btn bg" href="#contacto" data-mag>{t('hero.cta.contact')}</a>
+        <span class="m scroll"><span class="mouse"><i></i></span>Scroll</span>
+      </div>
+    </div>
+
+    <div class="now glass">
+      <span class="pulse"></span>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span class="m" style="color:var(--mu2);font-size:11px">{t('hero.now')}</span>
+        <span style="font-weight:700;font-size:14px;line-height:1.35">{t('hero.now.role')}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEES -->
+  <div class="mqs" aria-hidden="true">
+    <div class="mq">
+      {
+        [1, 2].map(() => (
+          <div class="mqt">
+            {marquee.map((word, i) => (
+              <>
+                <span class:list={['mqi', { o: i % 2 === 1 }]}>{word}</span>
+                <span class="mqi"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" set:html={star} /></span>
+              </>
+            ))}
           </div>
-        ))}
-      </dl>
+        ))
+      }
+    </div>
+    <div class="mq rev">
+      {[1, 2].map(() => <div class="mqt">{stackMarquee.map((s) => <span class="chipmq">{s}</span>)}</div>)}
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <section class="w" style="position:relative;z-index:4;padding-top:110px">
+    <div class="sts">
+      {
+        stats.map((s, i) => (
+          <div class="stc glass rv" style={`--dl:${i * 0.1}s`}>
+            <div class="stn"><span data-count={s.n}>{s.n}</span><span class="grad">{s.suffix}</span></div>
+            <div class="stl">{s.label}</div>
+          </div>
+        ))
+      }
     </div>
   </section>
 
-  <section id="proyectos" class="section">
-    <div class="container">
-      <div class="section-head">
-        <p class="eyebrow">{t('projects.featured')}</p>
-        <h2>{t('projects.title')}</h2>
-        <p>{t('projects.lead')}</p>
+  <!-- PROYECTOS -->
+  <section id="proyectos" class="w sec" style="padding-top:150px">
+    <div class="rv head">
+      <div class="head-txt">
+        <span class="kick m"><b></b>{t('projects.kick')}</span>
+        <h2 class="u h2">{t('projects.title.a')} <span class="grad">{t('projects.title.b')}</span></h2>
       </div>
-      <div class="grid grid--featured">
-        {featured.map((p) => <ProjectCard project={p} lang={lang} large />)}
+      <div class="fl glass" role="group" aria-label={t('projects.filter')}>
+        {
+          filters.map((f, i) => (
+            <button type="button" class:list={['chip', { on: i === 0 }]} data-filter={f.key} aria-pressed={i === 0 ? 'true' : 'false'}>
+              {f.label}
+              <small>{f.count}</small>
+            </button>
+          ))
+        }
       </div>
+    </div>
+    <div class="pg" id="grid">
+      {projects.map((p, i) => <ProjectCard project={p} lang={lang} index={i} />)}
+    </div>
+  </section>
 
-      <div class="more-head">
-        <h3>{t('projects.more')}</h3>
-        <div class="filters" role="group" aria-label="Filter">
-          <button type="button" class="filter is-active" data-filter="all">{t('filter.all')}</button>
-          {categories.map((c) => (
-            <button type="button" class="filter" data-filter={c}>{t(`category.${c}`)}</button>
-          ))}
+  <!-- PERFIL -->
+  <section id="perfil" class="w sec">
+    <div class="perfil">
+      <div class="rv col">
+        <span class="kick m"><b></b>{t('about.kick')}</span>
+        <h2 class="u h2">{t('about.title.a')} <span class="grad">{t('about.title.b')}</span></h2>
+        <p class="lead">{t('about.p')}</p>
+        <div>
+          <a class="btn bg" href={site.linkedin} target="_blank" rel="noopener" data-mag>
+            {t('about.linkedin')}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={arrowUpRight} />
+          </a>
         </div>
       </div>
-      <div class="grid grid--rest" id="rest-grid">
-        {rest.map((p) => <ProjectCard project={p} lang={lang} />)}
-      </div>
+      <ol class="tlw">
+        {
+          timeline.map((it, i) => (
+            <li class:list={['tli', 'glass', 'rv', { cur0: i === 0 }]} style={`--dl:${i * 0.1}s`}>
+              <div class="m" style={`color:${i === 0 ? 'var(--c3)' : 'var(--mu2)'}`}>{it.when}</div>
+              <h3 class="u">{it.title}</h3>
+              <p>{it.desc}</p>
+            </li>
+          ))
+        }
+      </ol>
     </div>
   </section>
 
-  <section id="perfil" class="section about">
-    <div class="container about-grid">
-      <div class="section-head">
-        <p class="eyebrow">{t('about.title')}</p>
-        <h2>{site.name}</h2>
-        <p>{t('about.p1')}</p>
-        <p>{t('about.p2')}</p>
-      </div>
-      <div>
-        <h3 class="skills-title">{t('about.skills')}</h3>
-        <ul class="skills">
-          {skills.map((s) => (
-            <li><strong>{s.title}</strong><span>{s.desc}</span></li>
-          ))}
-        </ul>
-      </div>
+  <!-- METODO -->
+  <section id="metodo" class="w sec">
+    <div class="rv col" style="margin-bottom:48px">
+      <span class="kick m"><b></b>{t('method.kick')}</span>
+      <h2 class="u h2">{t('method.title.a')} <span class="grad">{t('method.title.b')}</span></h2>
+    </div>
+    <div class="bento">
+      {
+        method.map((m, i) => (
+          <div class="bx glass rv" style={`--bc:${m.color};--dl:${i * 0.1}s`}>
+            <span class="bxi">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={m.icon} />
+            </span>
+            <h3 class="u">{t(`method.${m.k}.t`)}</h3>
+            <p>{t(`method.${m.k}.d`)}</p>
+            <span class="bxn" aria-hidden="true">{String(m.k).padStart(2, '0')}</span>
+          </div>
+        ))
+      }
     </div>
   </section>
 
-  <section id="contacto" class="section contact">
-    <div class="container contact-box">
-      <h2>{t('contact.title')}</h2>
-      <p>{t('contact.lead')}</p>
-      <div class="ctas">
-        <a class="btn btn--primary" href={site.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
-        <a class="btn" href={site.github} target="_blank" rel="noopener">GitHub ↗</a>
-        {site.email && <a class="btn" href={`mailto:${site.email}`}>{site.email}</a>}
+  <!-- CONTACTO -->
+  <section id="contacto" class="w sec">
+    <div class="ct glass rv" data-hue>
+      <div class="aur" aria-hidden="true" style="height:100%"><div class="bl a" style="top:40%"></div><div class="bl b" style="top:10%"></div></div>
+      <div class="ct-in">
+        <span class="kick m"><b></b>{t('contact.kick')}<b style="transform:scaleX(-1)"></b></span>
+        <h2 class="u mega">{t('contact.title.a')} <span class="grad">{t('contact.title.b')}</span></h2>
+        <p class="ct-lead">{t('contact.lead')}</p>
+        <div class="ctas" style="justify-content:center;margin-top:0">
+          <a class="btn bp" href={site.linkedin} target="_blank" rel="noopener" data-mag>
+            {t('contact.linkedin')}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={arrowUpRight} />
+          </a>
+          <a class="btn bg" href={site.github} target="_blank" rel="noopener" data-mag>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6"></path><path d="M8 6l-6 6 6 6"></path></svg>
+            {t('contact.github')}
+          </a>
+          {site.email && <a class="btn bg" href={`mailto:${site.email}`} data-mag>{site.email}</a>}
+        </div>
       </div>
     </div>
   </section>
 </Base>
 
 <script>
-  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter');
-  const cards = document.querySelectorAll<HTMLElement>('#rest-grid .card');
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const cards = document.querySelectorAll<HTMLElement>('#grid .pc');
   buttons.forEach((btn) =>
     btn.addEventListener('click', () => {
       const f = btn.dataset.filter;
-      buttons.forEach((b) => b.classList.toggle('is-active', b === btn));
-      cards.forEach((c) => (c.hidden = f !== 'all' && c.dataset.category !== f));
+      buttons.forEach((b) => {
+        b.classList.toggle('on', b === btn);
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      let i = 0;
+      cards.forEach((c) => {
+        const show = f === 'all' || c.dataset.category === f;
+        c.hidden = !show;
+        if (show) {
+          // reinicia la animación de entrada escalonada
+          c.style.animation = 'none';
+          void c.offsetWidth;
+          c.style.animation = '';
+          c.style.animationDelay = `${i++ * 0.07}s`;
+        }
+      });
     }),
   );
 </script>
 
 <style>
-  .hero { padding-block: clamp(56px, 10vw, 120px) clamp(40px, 6vw, 72px); border-bottom: 1px solid var(--line); }
-  .hero-grid { display: grid; gap: 48px; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: end; }
-  .hero-copy { display: grid; gap: 20px; }
-  h1 { font-size: clamp(2.2rem, 5.4vw, 3.9rem); }
-  .lead { font-size: clamp(1.05rem, 1.6vw, 1.2rem); color: var(--ink-2); max-width: 60ch; }
-  .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-  .stat { background: var(--surface); padding: 20px; display: flex; flex-direction: column-reverse; gap: 2px; }
-  .stat dd { margin: 0; font-family: var(--font-display); font-size: 2.2rem; line-height: 1; }
-  .stat dt { font-size: 0.82rem; color: var(--ink-3); }
-  @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
-
-  .grid { display: grid; gap: 24px; }
-  .grid--featured { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .grid--rest { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  @media (max-width: 960px) { .grid--rest { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 680px) { .grid--featured, .grid--rest { grid-template-columns: 1fr; } }
-
-  .more-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 72px 0 24px; }
-  .more-head h3 { font-size: 1.5rem; }
-  .filters { display: flex; flex-wrap: wrap; gap: 8px; }
-  .filter {
-    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
-    color: var(--ink-2); font: 500 0.85rem var(--font-body); cursor: pointer;
+  /* hero */
+  .hero { position: relative; min-height: 900px; display: flex; align-items: center; padding: 150px 0 110px; isolation: isolate; }
+  .hero-in { position: relative; z-index: 4; width: 100%; transform: translateY(calc(var(--sy, 0) * 0.25px)); opacity: calc(1 - var(--sy, 0) / 900); }
+  .badge { display: inline-flex; align-items: center; gap: 12px; padding: 10px 18px 10px 12px; border-radius: 999px; font-size: 14px; color: var(--mu); }
+  .title { font-size: clamp(42px, 7.2vw, 116px); line-height: 1; font-weight: 800; margin-top: 34px; max-width: 1180px; }
+  .role { margin-top: 30px; font-size: clamp(14px, 1.4vw, 18px); letter-spacing: 0.04em; text-transform: none; color: var(--mu); }
+  .scr { color: var(--tx); }
+  .caret { display: inline-block; width: 0.55em; height: 1.1em; background: var(--c3); vertical-align: -0.18em; margin-left: 4px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hero-lead { margin: 26px 0 0; max-width: 600px; font-size: clamp(17px, 1.5vw, 20px); line-height: 1.65; color: var(--mu); }
+  .ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 40px; align-items: center; }
+  .scroll { display: flex; align-items: center; gap: 12px; margin-left: 18px; color: var(--mu2); }
+  .mouse { width: 26px; height: 42px; border-radius: 14px; border: 1.5px solid var(--ln2); display: flex; justify-content: center; padding-top: 8px; }
+  .mouse i { width: 3px; height: 8px; border-radius: 3px; background: var(--tx); animation: wheel 1.8s infinite; }
+  @keyframes wheel { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
+  .now {
+    position: absolute; right: clamp(20px, 4vw, 48px); bottom: 60px; z-index: 5; border-radius: 20px; padding: 18px 20px;
+    display: flex; gap: 14px; align-items: center; max-width: 340px;
+    animation: fin 1s calc(var(--d) + 1.2s) var(--ease) both, bob 6s calc(var(--d) + 2.2s) ease-in-out infinite;
   }
-  .filter:hover { border-color: var(--ink-3); }
-  .filter.is-active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-  .about { background: var(--surface-2); border-block: 1px solid var(--line); }
-  .about-grid { display: grid; gap: 48px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
-  .about .section-head { margin-bottom: 0; }
-  .skills-title { font-size: 1.3rem; margin-bottom: 16px; }
-  .skills { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-  .skills li { display: grid; gap: 2px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); }
-  .skills span { color: var(--ink-2); font-size: 0.93rem; }
-  @media (max-width: 860px) { .about-grid { grid-template-columns: 1fr; } }
+  /* marquees */
+  .mqs { position: relative; z-index: 4; padding: 30px 0 10px; transform: rotate(-2deg); margin: 0 -40px; overflow: hidden; }
+  .mq { display: flex; overflow: hidden; }
+  .mq + .mq { margin-top: 14px; }
+  .mqt { display: flex; flex: none; gap: 18px; padding-right: 18px; animation: mq 36s linear infinite; }
+  .mq.rev .mqt { animation-direction: reverse; animation-duration: 44s; }
+  .mqi { display: inline-flex; align-items: center; gap: 14px; white-space: nowrap; font-family: Unbounded, sans-serif; font-weight: 600; font-size: clamp(22px, 2.6vw, 36px); letter-spacing: -0.03em; }
+  .mqi.o { color: transparent; -webkit-text-stroke: 1px rgba(242, 240, 255, 0.45); }
+  .mqi svg { color: var(--c2); }
+  .chipmq { padding: 12px 22px; border-radius: 999px; border: 1px solid var(--ln2); background: var(--gl); font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--mu); white-space: nowrap; }
+  @keyframes mq { to { transform: translateX(-100%); } }
 
-  .contact-box { display: grid; gap: 14px; justify-items: start; }
-  .contact-box h2 { font-size: clamp(1.9rem, 4.5vw, 3rem); }
-  .contact-box p { color: var(--ink-2); font-size: 1.1rem; }
+  /* stats */
+  .sts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px; }
+  .stc { position: relative; padding: 32px; border-radius: 24px; overflow: hidden; }
+  .stc::before {
+    content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: conic-gradient(from var(--ang), transparent 0 60%, var(--c1), var(--c2), transparent);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 6s linear infinite;
+  }
+  .stn { font-family: Unbounded, sans-serif; font-weight: 800; font-size: clamp(52px, 5.6vw, 80px); letter-spacing: -0.06em; line-height: 1; }
+  .stl { margin-top: 14px; color: var(--mu); font-size: 15px; font-weight: 600; }
+
+  /* projects */
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap; margin-bottom: 48px; }
+  .head-txt, .col { display: flex; flex-direction: column; gap: 20px; max-width: 720px; }
+  .fl { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 6px; border-radius: 28px; }
+  .chip {
+    min-height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: transparent; color: var(--mu);
+    font: 600 14px Manrope, system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: color 0.3s, background 0.3s, box-shadow 0.3s;
+  }
+  .chip:hover { color: #fff; }
+  .chip.on { color: #fff; background: linear-gradient(120deg, var(--c1), var(--c2)); box-shadow: 0 8px 30px -8px var(--c2); }
+  .chip small { font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: 0.75; }
+  .pg { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); grid-auto-flow: dense; gap: 20px; perspective: 1400px; }
+
+  /* perfil */
+  .perfil { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: clamp(40px, 6vw, 90px); align-items: start; }
+  .perfil .col { gap: 24px; }
+  .tlw { position: relative; padding: 0 0 0 40px; margin: 0; list-style: none; }
+  .tlw::before { content: ''; position: absolute; left: 11px; top: 12px; bottom: 12px; width: 2px; background: linear-gradient(180deg, var(--c2), var(--c1) 40%, var(--ln) 100%); }
+  .tli { position: relative; padding: 22px 26px; border-radius: 20px; margin-bottom: 16px; transition: transform 0.5s var(--ease), border-color 0.4s; }
+  .tli:hover { transform: translateX(10px); border-color: rgba(255, 255, 255, 0.3); }
+  .tli::before { content: ''; position: absolute; left: -36px; top: 30px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 2px solid var(--mu2); }
+  .tli.cur0::before { border-color: var(--c2); background: var(--c2); box-shadow: 0 0 0 6px color-mix(in oklab, var(--c2) 25%, transparent), 0 0 30px var(--c2); }
+  .tli h3 { font-size: 22px; font-weight: 600; margin-top: 10px; letter-spacing: -0.03em; }
+  .tli p { margin: 10px 0 0; color: var(--mu); font-size: 15.5px; line-height: 1.6; }
+
+  /* bento */
+  .bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
+  .bx { position: relative; padding: 32px; border-radius: 26px; overflow: hidden; display: flex; flex-direction: column; gap: 16px; min-height: 300px; isolation: isolate; transition: transform 0.5s var(--ease); }
+  .bx:hover { transform: translateY(-8px); }
+  .bx::before { content: ''; position: absolute; width: 260px; height: 260px; border-radius: 50%; right: -90px; top: -90px; background: var(--bc, var(--c1)); filter: blur(70px); opacity: 0.35; z-index: -1; transition: opacity 0.5s, transform 0.8s var(--ease); }
+  .bx:hover::before { opacity: 0.75; transform: scale(1.4); }
+  .bxi { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--ln2); }
+  .bx h3 { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
+  .bx p { margin: 0; color: var(--mu); font-size: 15px; line-height: 1.6; }
+  .bxn { position: absolute; right: 24px; bottom: 4px; font-family: Unbounded, sans-serif; font-weight: 800; font-size: 110px; letter-spacing: -0.06em; line-height: 1; color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.12); z-index: -1; transition: -webkit-text-stroke-color 0.5s; }
+  .bx:hover .bxn { -webkit-text-stroke-color: rgba(255, 255, 255, 0.35); }
+
+  /* contacto */
+  .ct { position: relative; border-radius: 40px; overflow: hidden; padding: clamp(48px, 8vw, 120px) clamp(28px, 6vw, 96px); isolation: isolate; text-align: center; }
+  .ct .bl { opacity: 0.6; }
+  .ct-in { position: relative; display: flex; flex-direction: column; align-items: center; gap: 34px; }
+  .mega { font-size: clamp(46px, 8.4vw, 136px); line-height: 0.95; font-weight: 800; text-wrap: balance; }
+  .mega .grad { background-image: radial-gradient(circle at var(--hx, 50%) var(--hy, 50%), #fff 0%, var(--c3) 18%, var(--c2) 42%, var(--c1) 70%); background-size: 100% 100%; animation: none; }
+  .ct-lead { margin: 0; color: var(--mu); font-size: clamp(17px, 1.6vw, 21px); line-height: 1.6; max-width: 620px; }
+
+  @media (max-width: 760px) {
+    .hero { flex-direction: column; align-items: stretch; min-height: 0; }
+    .now { position: relative; right: auto; bottom: auto; margin: 40px 20px 0; }
+    .scroll { display: none; }
+  }
 </style>

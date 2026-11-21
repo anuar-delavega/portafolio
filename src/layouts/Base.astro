@@ -9,9 +9,11 @@ interface Props {
   description?: string;
   /** Ruta equivalente en el otro idioma (sin base), p. ej. "en/projects/democrm". */
   altPath: string;
+  /** Muestra el preloader (solo la primera visita de la sesión al inicio). */
+  intro?: boolean;
 }
 
-const { lang, title, description, altPath } = Astro.props;
+const { lang, title, description, altPath, intro = false } = Astro.props;
 const t = useT(lang);
 const pageTitle = title ? `${title} · ${site.name}` : t('meta.title');
 const pageDesc = description ?? t('meta.description');
@@ -19,6 +21,7 @@ const otherLang: Lang = lang === 'es' ? 'en' : 'es';
 const home = href(lang === 'es' ? '' : 'en');
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const alternate = new URL(href(altPath), Astro.site);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <!doctype html>
@@ -26,6 +29,7 @@ const alternate = new URL(href(altPath), Astro.site);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05040A" />
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
     <link rel="canonical" href={canonical} />
@@ -37,103 +41,71 @@ const alternate = new URL(href(altPath), Astro.site);
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={lang === 'es' ? 'es_MX' : 'en_US'} />
     <meta name="twitter:card" content="summary" />
-    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@400;600;800&display=swap"
     />
-    <script is:inline>
-      try {
-        const saved = localStorage.getItem('theme');
-        if (saved) document.documentElement.dataset.theme = saved;
-      } catch (_) {}
-    </script>
+    {
+      intro && (
+        <script is:inline>
+          try {
+            if (!sessionStorage.getItem('intro-seen') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              document.documentElement.classList.add('intro');
+              sessionStorage.setItem('intro-seen', '1');
+              // Seguro: si la animación no corre, el preloader nunca bloquea la página
+              setTimeout(() => document.querySelector('.ld')?.remove(), 3500);
+            }
+          } catch (_) {}
+        </script>
+      )
+    }
   </head>
   <body>
-    <a class="sr-only" href="#main">Skip</a>
-    <header class="site-header">
-      <div class="container bar">
-        <a class="brand" href={home} aria-label={site.name}>
-          <span class="mark" aria-hidden="true">AV</span>
-          <span class="brand-name">{site.name}</span>
-        </a>
-        <nav class="nav" aria-label="Main">
-          <a href={`${home}#proyectos`}>{t('nav.projects')}</a>
-          <a href={`${home}#perfil`}>{t('nav.about')}</a>
-          <a href={`${home}#contacto`}>{t('nav.contact')}</a>
-        </nav>
-        <div class="tools">
-          <a class="lang" href={href(altPath)} hreflang={otherLang} lang={otherLang} title={languages[otherLang]}>
-            {otherLang.toUpperCase()}
-          </a>
-          <button class="theme" type="button" aria-label={t('theme.toggle')} title={t('theme.toggle')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>
-          </button>
+    <a class="sr-only skip" href="#main">Skip to content</a>
+
+    {
+      intro && (
+        <div class="ld" aria-hidden="true">
+          <div class="m ld-row"><span>{site.name}</span><span>{t('ld.year')}</span></div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div class="ld-n" />
+            <div class="ld-bar" />
+            <div class="m ld-row"><span>{t('ld.tagline')}</span><span>{t('ld.loading')}</span></div>
+          </div>
         </div>
-      </div>
-    </header>
+      )
+    }
+
+    <div class="prog" aria-hidden="true"></div>
+    <div class="cur" aria-hidden="true"></div>
+    <div class="curd" aria-hidden="true"></div>
+
+    <nav class="nav" aria-label="Main">
+      <a href={`${home}#inicio`} class="nlogo" aria-label={t('nav.home')}>AV</a>
+      <a class="nl" href={`${home}#proyectos`}>{t('nav.projects')}</a>
+      <a class="nl hide" href={`${home}#perfil`}>{t('nav.about')}</a>
+      <a class="nl hide" href={`${home}#metodo`}>{t('nav.method')}</a>
+      <a class="nl lang" href={href(altPath)} hreflang={otherLang} lang={otherLang} title={languages[otherLang]}>
+        {otherLang.toUpperCase()}
+      </a>
+      <a class="btn bp sm" href={`${home}#contacto`} data-mag>{t('nav.contact')}</a>
+    </nav>
 
     <main id="main">
       <slot />
     </main>
 
-    <footer class="site-footer">
-      <div class="container foot">
-        <p>© {new Date().getFullYear()} {site.name}. {t('footer.built')}</p>
-        <div class="foot-links">
-          <a href={site.linkedin} target="_blank" rel="noopener">LinkedIn</a>
-          <a href={site.github} target="_blank" rel="noopener">GitHub</a>
-        </div>
-      </div>
+    <footer class="w m foot">
+      <span>© {new Date().getFullYear()} {site.name}</span>
+      <span>{t('footer.city')}</span>
+      <a href="#main">{t('footer.top')}</a>
     </footer>
 
-    <script is:inline>
-      document.querySelector('.theme')?.addEventListener('click', () => {
-        const root = document.documentElement;
-        const current =
-          root.dataset.theme ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        const next = current === 'dark' ? 'light' : 'dark';
-        root.dataset.theme = next;
-        try { localStorage.setItem('theme', next); } catch (_) {}
-      });
+    <script>
+      import '../scripts/fx';
     </script>
   </body>
 </html>
-
-<style>
-  .site-header {
-    position: sticky; top: 0; z-index: 10;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: saturate(1.4) blur(12px);
-    -webkit-backdrop-filter: saturate(1.4) blur(12px);
-    border-bottom: 1px solid var(--line);
-  }
-  .bar { display: flex; align-items: center; gap: 24px; height: 64px; }
-  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; }
-  .mark {
-    display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px;
-    background: var(--ink); color: var(--bg); font-family: var(--font-display); font-size: 0.95rem;
-  }
-  .nav { display: flex; gap: 24px; margin-left: auto; }
-  .nav a { text-decoration: none; color: var(--ink-2); font-size: 0.93rem; font-weight: 500; }
-  .nav a:hover { color: var(--ink); }
-  .tools { display: flex; align-items: center; gap: 8px; }
-  .lang, .theme {
-    display: grid; place-items: center; height: 36px; min-width: 36px; padding: 0 10px;
-    border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
-    color: var(--ink); font: 600 0.78rem var(--font-body); text-decoration: none; cursor: pointer;
-  }
-  .lang:hover, .theme:hover { border-color: var(--ink-3); }
-  @media (max-width: 720px) {
-    .nav { display: none; }
-    .tools { margin-left: auto; }
-    .brand-name { font-size: 0.95rem; }
-  }
-  .site-footer { border-top: 1px solid var(--line); padding-block: 28px; color: var(--ink-3); font-size: 0.88rem; }
-  .foot { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
-  .foot-links { display: flex; gap: 18px; }
-  .foot-links a { text-decoration: none; }
-  .foot-links a:hover { color: var(--ink); }
-</style>

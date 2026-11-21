@@ -1,7 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import Cover from '../components/Cover.astro';
+import Vis from '../components/Vis.astro';
 import { useT, projectsSegment, type Lang } from '../i18n/ui';
 import { href } from '../site';
 
@@ -23,107 +23,150 @@ const prefix = (l: Lang) => (l === 'es' ? '' : 'en/');
 const other: Lang = lang === 'es' ? 'en' : 'es';
 const altPath = `${prefix(other)}${projectsSegment[other]}/${slug}`;
 const home = href(lang === 'es' ? '' : 'en');
+const arrow = '<path d="M7 17 17 7M8 7h9v9"/>';
 ---
 
 <Base lang={lang} title={d.title} description={d.tagline} altPath={altPath}>
-  <article class="container detail">
-    <a class="back" href={`${home}#proyectos`}>← {t('project.back')}</a>
+  <section class="top">
+    <div class="aur" aria-hidden="true"><div class="bl a"></div><div class="bl b"></div></div>
+    <svg class="grain" aria-hidden="true">
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" stitchTiles="stitch"></feTurbulence></filter>
+      <rect width="100%" height="100%" filter="url(#grain)"></rect>
+    </svg>
 
-    <header class="head">
-      <div class="meta">
-        <span class:list={['badge', `badge--${d.status}`]}>{t(`status.${d.status}`)}</span>
-        <span>·</span>
-        <span>{t(`category.${d.category}`)}</span>
+    <div class="w head">
+      <a class="kick m back fi" href={`${home}#proyectos`} style="animation-delay:.3s"><b></b>← {t('project.back')}</a>
+      <div class="meta fi" style="animation-delay:.4s">
+        <span class="m num">{String(d.order).padStart(2, '0')}</span>
+        <span class:list={['stt', d.status]}><i></i>{t(`status.${d.status}`)}</span>
+        <span class="m" style="color:var(--mu2)">{t(`category.${d.category}`)} · {d.period}</span>
       </div>
-      <h1>{d.title}</h1>
-      <p class="tagline">{d.tagline}</p>
-      <div class="ctas">
-        {d.demo && <a class="btn btn--primary" href={d.demo} target="_blank" rel="noopener">{t('project.demo')} ↗</a>}
-        {d.repo && <a class="btn" href={d.repo} target="_blank" rel="noopener">{t('project.repo')} ↗</a>}
-        {!d.repo && <span class="private">🔒 {t('project.private')}</span>}
+      <h1 class="u title">
+        <span class="msk"><span style="animation-delay:.45s">{d.title}</span></span>
+      </h1>
+      <p class="tagline fi" style="animation-delay:.7s">{d.tagline}</p>
+      <div class="ctas fi" style="animation-delay:.85s">
+        {d.demo && (
+          <a class="btn bp" href={d.demo} target="_blank" rel="noopener" data-mag>
+            {t('project.demo')}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={arrow} />
+          </a>
+        )}
+        {d.repo && (
+          <a class="btn bg" href={d.repo} target="_blank" rel="noopener" data-mag>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 18l6-6-6-6"></path><path d="M8 6l-6 6 6 6"></path></svg>
+            {t('project.repo')}
+          </a>
+        )}
+        {!d.repo && <span class="private glass">🔒 {t('project.private')}</span>}
       </div>
-    </header>
+    </div>
+  </section>
 
-    <Cover slug={slug} title={d.title} category={d.category} order={d.order} tall />
+  <div class="w body">
+    <div class="vis glass rv" aria-hidden="true">
+      <Vis slug={slug} title={d.title} category={d.category} />
+    </div>
 
     <div class="layout">
       <aside class="facts">
-        <dl>
-          <div><dt>{t('project.role')}</dt><dd>{d.role}</dd></div>
-          <div><dt>{t('project.period')}</dt><dd>{d.period}</dd></div>
+        <dl class="glass rv">
+          <div><dt class="m">{t('project.role')}</dt><dd>{d.role}</dd></div>
+          <div><dt class="m">{t('project.period')}</dt><dd>{d.period}</dd></div>
           <div>
-            <dt>{t('project.stack')}</dt>
-            <dd><ul class="stack">{d.stack.map((s) => <li class="chip">{s}</li>)}</ul></dd>
+            <dt class="m">{t('project.stack')}</dt>
+            <dd><ul class="tags">{d.stack.map((s) => <li class="tg">{s}</li>)}</ul></dd>
           </div>
         </dl>
         {d.metrics.length > 0 && (
           <div class="metrics">
-            {d.metrics.map((m) => (
-              <div><strong>{m.value}</strong><span>{m.label}</span></div>
+            {d.metrics.map((m, i) => (
+              <div class="glass rv" style={`--dl:${i * 0.08}s`}>
+                <strong class="grad">{m.value}</strong>
+                <span>{m.label}</span>
+              </div>
             ))}
           </div>
         )}
       </aside>
 
       <div class="content">
-        <section class="highlights">
-          <h2>{t('project.highlights')}</h2>
-          <ul>{d.highlights.map((h) => <li>{h}</li>)}</ul>
+        <section class="rv">
+          <span class="kick m"><b></b>{t('project.highlights')}</span>
+          <ul class="hl">{d.highlights.map((h) => <li>{h}</li>)}</ul>
         </section>
-        <div class="prose"><Content /></div>
-        {d.credit && <p class="credit">{d.credit}</p>}
+        <div class="prose rv"><Content /></div>
+        {d.credit && <p class="credit glass rv">{d.credit}</p>}
       </div>
     </div>
 
-    <a class="next" href={href(`${prefix(lang)}${projectsSegment[lang]}/${nextSlug}`)}>
-      <span>{t('project.next')}</span>
-      <strong>{next.data.title} →</strong>
+    <a class="next glass rv" href={href(`${prefix(lang)}${projectsSegment[lang]}/${nextSlug}`)} data-tilt>
+      <div>
+        <span class="m" style="color:var(--mu2)">{t('project.next')}</span>
+        <strong class="u">{next.data.title}</strong>
+      </div>
+      <span class="arr" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" set:html={arrow} />
+      </span>
     </a>
-  </article>
+  </div>
 </Base>
 
 <style>
-  .detail { padding-block: 32px 80px; display: grid; gap: 32px; }
-  .back { color: var(--ink-3); text-decoration: none; font-size: 0.9rem; }
-  .back:hover { color: var(--ink); }
-  .head { display: grid; gap: 14px; max-width: 760px; }
-  .meta { display: flex; gap: 8px; align-items: center; color: var(--ink-3); font-size: 0.85rem; }
-  h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); }
-  .tagline { font-size: 1.2rem; color: var(--ink-2); }
-  .ctas { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 6px; }
-  .private { font-size: 0.88rem; color: var(--ink-3); }
+  .top { position: relative; padding: 150px 0 60px; isolation: isolate; }
+  .top .aur { height: 900px; }
+  .head { position: relative; z-index: 4; display: flex; flex-direction: column; gap: 22px; }
+  .back { color: var(--c3); }
+  .back:hover { color: #fff; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+  .num { color: rgba(255, 255, 255, 0.75); }
+  .title { font-size: clamp(40px, 7vw, 104px); line-height: 1; font-weight: 800; max-width: 1100px; }
+  .tagline { margin: 0; max-width: 760px; font-size: clamp(17px, 1.6vw, 21px); line-height: 1.6; color: var(--mu); }
+  .ctas { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 8px; }
+  .private { display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border-radius: 999px; color: var(--mu); font-size: 14px; }
 
-  .layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 56px; align-items: start; }
-  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; gap: 32px; } }
-  .facts { position: sticky; top: 88px; display: grid; gap: 20px; }
-  @media (max-width: 860px) { .facts { position: static; } }
-  .facts dl { margin: 0; display: grid; gap: 18px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-  .facts dt { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
-  .facts dd { margin: 0; }
-  .stack { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; list-style: none; }
-  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-  .metrics div { background: var(--surface); padding: 14px 16px; display: grid; }
-  .metrics strong { font-family: var(--font-display); font-size: 1.6rem; font-weight: 500; line-height: 1.1; }
-  .metrics span { font-size: 0.8rem; color: var(--ink-3); }
+  .body { position: relative; z-index: 4; display: grid; gap: 56px; }
+  .vis {
+    position: relative; height: clamp(240px, 34vw, 420px); border-radius: 30px; overflow: hidden;
+    background:
+      radial-gradient(120% 120% at 20% 0%, color-mix(in oklab, var(--c1) 30%, transparent), transparent 60%),
+      radial-gradient(100% 100% at 100% 100%, color-mix(in oklab, var(--c2) 25%, transparent), transparent 60%),
+      #0b0916;
+  }
+  .vis :global(.orb) { transform: scale(1.6); }
 
-  .content { display: grid; gap: 40px; max-width: 70ch; }
-  .highlights h2, .prose :global(h2) { font-size: 1.6rem; margin-bottom: 14px; }
-  .highlights ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-  .highlights li { position: relative; padding-left: 26px; }
-  .highlights li::before { content: ''; position: absolute; left: 4px; top: 0.6em; width: 9px; height: 9px; border-radius: 3px; background: var(--accent); }
-  .prose { display: grid; gap: 16px; color: var(--ink-2); font-size: 1.04rem; }
-  .prose :global(h2) { color: var(--ink); margin: 16px 0 0; }
-  .prose :global(strong) { color: var(--ink); }
-  .prose :global(ul) { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
-  .prose :global(code) { font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
-  .credit { font-size: 0.88rem; color: var(--ink-3); padding: 14px 16px; border-left: 3px solid var(--line); background: var(--surface); border-radius: 0 8px 8px 0; }
+  .layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: clamp(32px, 5vw, 72px); align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .facts { position: sticky; top: 100px; display: grid; gap: 16px; }
+  @media (max-width: 900px) { .facts { position: static; } }
+  .facts dl { margin: 0; display: grid; gap: 22px; padding: 28px; border-radius: 24px; }
+  .facts dt { color: var(--mu2); margin-bottom: 8px; }
+  .facts dd { margin: 0; font-weight: 600; line-height: 1.5; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .metrics div { padding: 20px; border-radius: 20px; display: grid; gap: 6px; }
+  .metrics strong { font-family: Unbounded, sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.05em; line-height: 1; }
+  .metrics span { color: var(--mu); font-size: 13px; font-weight: 600; }
+
+  .content { display: grid; gap: 48px; max-width: 760px; }
+  .hl { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 14px; }
+  .hl li { position: relative; padding-left: 30px; font-size: 17px; line-height: 1.6; }
+  .hl li::before { content: ''; position: absolute; left: 0; top: 0.5em; width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--c1), var(--c2)); box-shadow: 0 0 14px color-mix(in oklab, var(--c2) 60%, transparent); }
+  .prose { display: grid; gap: 18px; color: var(--mu); font-size: 17px; line-height: 1.75; }
+  .prose :global(h2) { font-family: Unbounded, sans-serif; font-weight: 600; letter-spacing: -0.03em; color: var(--tx); font-size: clamp(24px, 2.4vw, 32px); line-height: 1.15; margin: 22px 0 0; }
+  .prose :global(p) { margin: 0; }
+  .prose :global(strong) { color: var(--tx); }
+  .prose :global(ul) { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+  .prose :global(li::marker) { color: var(--c2); }
+  .prose :global(code) { font-family: 'JetBrains Mono', monospace; font-size: 0.86em; color: var(--c3); background: rgba(34, 211, 238, 0.08); border: 1px solid rgba(34, 211, 238, 0.2); padding: 1px 7px; border-radius: 6px; }
+  .credit { margin: 0; padding: 18px 22px; border-radius: 18px; color: var(--mu); font-size: 14px; line-height: 1.6; border-left: 3px solid var(--c2); }
 
   .next {
-    display: grid; gap: 4px; padding: 24px 28px; margin-top: 24px; text-decoration: none;
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    transition: border-color 0.2s ease;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    padding: clamp(24px, 4vw, 40px); border-radius: 28px; margin-top: 24px;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.5s var(--ease), box-shadow 0.5s;
   }
-  .next:hover { border-color: var(--ink-3); }
-  .next span { font-size: 0.82rem; color: var(--ink-3); }
-  .next strong { font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; }
+  .next:hover { box-shadow: 0 40px 100px -30px color-mix(in oklab, var(--c1) 60%, transparent); }
+  .next div { display: grid; gap: 10px; }
+  .next strong { font-size: clamp(24px, 3.4vw, 44px); font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; }
+  .next:hover .arr { background: #fff; color: #05040a; border-color: #fff; transform: rotate(45deg); }
 </style>

@@ -1,6 +1,6 @@
 # Portafolio — instrucciones del proyecto
 
-Sitio estático Astro 7, bilingüe ES (raíz) / EN (`/en/`), desplegado en GitHub Pages bajo `base: '/portafolio'`.
+Sitio estático Astro 7 (diseño "Aurora inmersiva", solo oscuro; efectos en src/scripts/fx.ts), bilingüe ES (raíz) / EN (`/en/`), desplegado en GitHub Pages bajo `base: '/portafolio'`.
 
 ## Reglas
 - Todo proyecto existe en **ambos idiomas** con el mismo slug: `src/content/projects/{es,en}/<slug>.md`.
